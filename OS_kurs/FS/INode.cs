@@ -24,14 +24,15 @@ namespace OS_kurs.FS
 
         public INode()
         {
-            Access = "FFrwx---";
+            Access = "TDrwx---";
             UserID = 0;
             GroupID = 0;
-            SizeInBytes = 0;
-            SizeInBlocks = 0;
-            CreationTime = "01011990";
-            ModificationTime = "01012023";
+            SizeInBytes = 24;
+            SizeInBlocks = 1;
+            CreationTime = DateTime.Now.ToString("ddmmyyyy");
+            ModificationTime = DateTime.Now.ToString("ddmmyyyy");
             BlocksAddresses = new UInt16[10];
+            BlocksAddresses[0] = 5480;
         }
 
         public INode(string access, byte userID, byte groupID, UInt16 sizeInBytes, UInt16 sizeInBlocks, 

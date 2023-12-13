@@ -22,8 +22,8 @@ namespace OS_kurs.FS
         {
             ID = 0;
             GroupID = 0;
-            Login = "root                ";
-            Password = "123                 ";
+            Login = "root";
+            Password = "123";
         }
     }
 }

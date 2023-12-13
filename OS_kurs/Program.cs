@@ -14,7 +14,13 @@ namespace OS_kurs
 
             Console.WriteLine("Hello World!");
             FileSystem sys = new FileSystem();
-            //Console.WriteLine(ushort.MaxValue);
+            if (sys.IsLogin("ro ot", "123"))
+            {
+                Console.WriteLine("\nTRUE\n");
+            }
+
+
+            //Console.WriteLine(DateTime.Now.ToString("ddmmyyyy"));
             Console.ReadLine();
         }
     }

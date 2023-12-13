@@ -16,8 +16,8 @@ namespace OS_kurs.FS
 
         public FileNode()
         {
-            Name = "rootDir             ";
-            Expansion = "dir ";
+            Name = "rootDir";
+            Expansion = "dir";
         }
     }
 }
