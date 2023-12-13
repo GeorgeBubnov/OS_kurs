@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace OS_kurs
 {
     internal static class Program
     {
-        /// <summary>
-        /// Главная точка входа для приложения.
-        /// </summary>
-        [STAThread]
+        static FileSystem sys;
         static void Main()
         {
             Application.EnableVisualStyles();
@@ -19,6 +13,8 @@ namespace OS_kurs
             //Application.Run(new Form1());
 
             Console.WriteLine("Hello World!");
+            FileSystem sys = new FileSystem();
+            //Console.WriteLine(ushort.MaxValue);
             Console.ReadLine();
         }
     }

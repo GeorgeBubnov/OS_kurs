@@ -49,18 +49,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileSystem\DataBlock.cs" />
-    <Compile Include="FileSystem\IList.cs" />
-    <Compile Include="FileSystem\INode.cs" />
-    <Compile Include="FileSystem\RootDir.cs" />
-    <Compile Include="FileSystem\SuperBlock.cs" />
-    <Compile Include="FileSystem\UserInfo.cs" />
+    <Compile Include="FileSystem.cs" />
+    <Compile Include="FS\FileNode.cs" />
+    <Compile Include="FS\INode.cs" />
+    <Compile Include="FS\SuperBlock.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="FS\UserNode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
