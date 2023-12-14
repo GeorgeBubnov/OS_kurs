@@ -22,7 +22,84 @@ namespace OS_kurs
         {
             CreateDrive();
         }
+        public string ReadDirectory()
+        {
+            byte[] files = ReadFileBlock(Directory);
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                string res = "";
+                byte[] two = new byte[2];
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                byte[] twenty = new byte[20];
+                byte[] four = new byte[4];
 
+                two[0] = files[0];
+                two[1] = files[1];
+
+                UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
+
+                fs.Seek(addr, SeekOrigin.Begin); // Считываем права
+                fs.Read(eight, 0, 8);
+                res += Encoding.UTF8.GetString(eight);
+                res = res.Substring(1) + "\t";
+
+                fs.Read(one, 0, 1); // Получаем UserID
+                UInt16 temp = (UInt16)one[0];
+
+                fs.Seek(5062 + 24 * temp, SeekOrigin.Begin); // Считываем имя пользователя
+                fs.Read(twenty, 0, 20);
+                res += GetValidString(twenty) + "\t";
+
+                fs.Seek(addr + 10, SeekOrigin.Begin); // Считываем размер в байтах
+                fs.Read(two, 0, 2);
+                temp = (UInt16)BitConverter.ToInt16(two, 0);
+                res += temp + "\t";
+
+                fs.Seek(2, SeekOrigin.Current); // Считываем CreationTime
+                fs.Read(eight, 0, 8);
+                string date = Encoding.UTF8.GetString(eight);
+                date = date.Insert(2, ".");
+                date = date.Insert(5, ".");
+                res += date + "\t";
+
+                fs.Read(eight, 0, 8); // Считываем ModificationTime
+                date = Encoding.UTF8.GetString(eight);
+                date = date.Insert(2, ".");
+                date = date.Insert(5, ".");
+                res += date + "\t";
+
+                fs.Read(two, 0, 2); // Получаем BlockAddress
+                temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                fs.Seek(temp, SeekOrigin.Begin);
+                fs.Read(twenty, 0, 20);
+                res += GetValidString(twenty);
+                fs.Read(four, 0, 4);
+                res += "." + GetValidString(four) + "\n";
+
+                return res;
+            }
+        }
+        public byte[] ReadFileBlock(UInt16 iNodeOffset)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                byte[] buffer = new byte[2];
+                fs.Seek(iNodeOffset + 10, SeekOrigin.Begin);
+                fs.Read(buffer, 0, 2);
+                UInt16 size = (UInt16)BitConverter.ToInt16(buffer, 0);
+                fs.Seek(iNodeOffset + 30, SeekOrigin.Begin);
+                fs.Read(buffer, 0, 2);
+                UInt16 blockOffset = (UInt16)BitConverter.ToInt16(buffer, 0);
+
+                buffer = new byte[size];
+                fs.Seek(blockOffset + 24, SeekOrigin.Begin);
+                fs.Read(buffer, 0, size);
+
+                return buffer;
+            }
+        }
         public void CreateFile(string name, string expansion)
         {
             UInt16 addr = WriteNewINode("TFrw----");
