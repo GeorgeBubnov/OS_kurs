@@ -27,7 +27,7 @@ namespace OS_kurs.FS
             Access = "TDrwx---";
             UserID = 0;
             GroupID = 0;
-            SizeInBytes = 24;
+            SizeInBytes = 0;
             SizeInBlocks = 1;
             CreationDate = DateTime.Now.ToString("ddMMyyyy");
             ModificationDate = DateTime.Now.ToString("ddMMyyyy");

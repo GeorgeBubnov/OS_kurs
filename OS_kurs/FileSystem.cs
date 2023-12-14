@@ -2,33 +2,34 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Xml.Linq;
 
 namespace OS_kurs
 {
     class FileSystem
     {
         string path = "GeorgeFS.data";
-        public INode[] IList = new INode[SuperBlock.IListSize];
-        public UserNode[] UserList = new UserNode[10];
         public byte UserID = 0;
         public byte GroupID = 0;
+        public UInt16 Directory = 0;
 
+
+
+        public INode[] IList = new INode[SuperBlock.IListSize];
+        public UserNode[] UserList = new UserNode[10];
+        
         public FileSystem()
         {
             CreateDrive();
-            CreateFile("file.txt");
         }
 
-        public void CreateFile(string name)
+        public void CreateFile(string name, string expansion)
         {
-            UInt16 addr = WriteNewINode("TFr-x-w-", 0, 0);
-            /*WriteNewINode("TFrwxrwx", 10, 1);
-            WriteNewINode("TFr-----", 8, 0);*/
-
-            WriteNewData(addr, "file", "txt", Encoding.UTF8.GetBytes("Hello World!"));
-
+            UInt16 addr = WriteNewINode("TFrw----");
+            WriteNewFullName(addr, name, expansion);
+            WriteDataInBlock(Directory, BitConverter.GetBytes(addr));
         }
-        public UInt16 WriteNewINode(string access, UInt16 sizeInBytes, UInt16 sizeInBlocks)
+        public UInt16 WriteNewINode(string access)
         {
             using (FileStream fs = new FileStream(path, FileMode.Open))
             {
@@ -60,8 +61,8 @@ namespace OS_kurs
                     fs.Write(Encoding.UTF8.GetBytes(access), 0, INode.AccessSize);
                     fs.Write(BitConverter.GetBytes(UserID), 0, INode.UserIDSize);
                     fs.Write(BitConverter.GetBytes(GroupID), 0, INode.GroupIDSize);
-                    fs.Write(BitConverter.GetBytes(sizeInBytes), 0, INode.SizeInBytesSize); //TODO
-                    fs.Write(BitConverter.GetBytes(sizeInBlocks), 0, INode.SizeInBlocksSize); //TODO
+                    fs.Write(BitConverter.GetBytes((UInt16)0), 0, INode.SizeInBytesSize);
+                    fs.Write(BitConverter.GetBytes((UInt16)0), 0, INode.SizeInBlocksSize);
                     fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.CreationTimeSize);
                     fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.ModificationTimeSize);
                     return address;
@@ -69,7 +70,7 @@ namespace OS_kurs
                 return 0;
             }
         }
-        public void WriteNewData(UInt16 address, string name, string expansion, byte[] data)
+        public void WriteNewFullName(UInt16 address, string name, string expansion)
         {
             using (FileStream fs = new FileStream(path, FileMode.Open))
             {
@@ -104,12 +105,33 @@ namespace OS_kurs
                 fs.Seek(newBladdress + 20, SeekOrigin.Begin);
                 fs.Write(Encoding.UTF8.GetBytes(expansion), 0, expansion.Length);
 
-                fs.Seek(newBladdress + 24, SeekOrigin.Begin); // Записываем данные
+                fs.Seek(newBladdress + 512, SeekOrigin.Begin); // Заполняем нулями до конца блока
+                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+
+                fs.Seek(address + 10, SeekOrigin.Begin); // Записываем атрибуты INode
+                fs.Write(BitConverter.GetBytes((UInt16)0), 0, INode.SizeInBytesSize);
+                fs.Write(BitConverter.GetBytes((UInt16)1), 0, INode.SizeInBlocksSize);
+                fs.Seek(address + 22, SeekOrigin.Begin);
+                fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.ModificationTimeSize);
+                fs.Write(BitConverter.GetBytes(newBladdress), 0, 2);
+            }
+        }
+        public void WriteDataInBlock(UInt16 address, byte[] data)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                byte[] buffer = new byte[2];
+                fs.Seek(address + 30, SeekOrigin.Begin); // Выбираем первый блок
+                fs.Read(buffer, 0, 2);
+
+                UInt16 bladdress = (UInt16)BitConverter.ToInt16(buffer, 0);
+
+                fs.Seek(bladdress + 24, SeekOrigin.Begin); // Записываем данные
                 fs.Write(data, 0, data.Length);
 
                 if (data.Length < 488)
                 {
-                    fs.Seek(newBladdress + 512, SeekOrigin.Begin); // Заполняем нулями до конца блока
+                    fs.Seek(bladdress + 512, SeekOrigin.Begin); // Заполняем нулями до конца блока
                     fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
                 }
 
@@ -118,7 +140,6 @@ namespace OS_kurs
                 fs.Write(BitConverter.GetBytes((data.Length + 24) / 512 + 1), 0, INode.SizeInBlocksSize);
                 fs.Seek(address + 22, SeekOrigin.Begin);
                 fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.ModificationTimeSize);
-                fs.Write(BitConverter.GetBytes(newBladdress), 0, 2);
             }
         }
         public bool IsLogin(string login, string password) {
@@ -173,6 +194,8 @@ namespace OS_kurs
                 CreateRootDir();
 
                 CreateListBlock();
+
+                Directory = 60;
             }
 
 
@@ -209,8 +232,7 @@ namespace OS_kurs
                 fs.Write(BitConverter.GetBytes(IList[0].SizeInBlocks), 0, INode.SizeInBlocksSize);
                 fs.Write(Encoding.UTF8.GetBytes(IList[0].CreationDate), 0, INode.CreationTimeSize);
                 fs.Write(Encoding.UTF8.GetBytes(IList[0].ModificationDate), 0, INode.ModificationTimeSize);
-                for (int i = 0; i < 10; i++)
-                    fs.Write(BitConverter.GetBytes(IList[0].BlocksAddresses[i]), 0, 2); // 2 = sizeof(UInt16)
+                fs.Write(BitConverter.GetBytes(IList[0].BlocksAddresses[0]), 0, 2);
                 fs.Seek(5060, SeekOrigin.Begin);
                 fs.Write(BitConverter.GetBytes(0), 0, 1);
             }
