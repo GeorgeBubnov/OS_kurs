@@ -11,7 +11,7 @@ namespace OS_kurs
         string path = "GeorgeFS.data";
         public byte UserID = 0;
         public byte GroupID = 0;
-        public UInt16 Directory = 0;
+        public UInt16 Directory = 60;
 
 
 
@@ -20,9 +20,92 @@ namespace OS_kurs
         
         public FileSystem()
         {
-            CreateDrive();
+            //CreateDrive();
         }
+        public string ReadDirectory()
+        {
+            byte[] files = ReadFileBlock(Directory);
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                string res = "";
+                byte[] two = new byte[2];
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                byte[] twenty = new byte[20];
+                byte[] four = new byte[4];
 
+                fs.Seek(60 + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Read(two, 0, 2);
+                UInt16 count = (UInt16)BitConverter.ToInt16(two, 0);
+
+                for (int i = 0; i < count; i += 2)
+                {
+                    two[0] = files[i];
+                    two[1] = files[i + 1];
+
+                    UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(addr, SeekOrigin.Begin); // Считываем права
+                    fs.Read(eight, 0, 8);
+                    res += Encoding.UTF8.GetString(eight) + "\t";
+
+                    fs.Read(one, 0, 1); // Получаем UserID
+                    UInt16 temp = (UInt16)one[0];
+
+                    fs.Seek(5062 + 24 * temp, SeekOrigin.Begin); // Считываем имя пользователя
+                    fs.Read(twenty, 0, 20);
+                    res += GetValidString(twenty) + "\t";
+
+                    fs.Seek(addr + 10, SeekOrigin.Begin); // Считываем размер в байтах
+                    fs.Read(two, 0, 2);
+                    temp = (UInt16)BitConverter.ToInt16(two, 0);
+                    res += temp + "\t";
+
+                    fs.Seek(2, SeekOrigin.Current); // Считываем CreationTime
+                    fs.Read(eight, 0, 8);
+                    string date = Encoding.UTF8.GetString(eight);
+                    date = date.Insert(2, ".");
+                    date = date.Insert(5, ".");
+                    res += date + "\t";
+
+                    fs.Read(eight, 0, 8); // Считываем ModificationTime
+                    date = Encoding.UTF8.GetString(eight);
+                    date = date.Insert(2, ".");
+                    date = date.Insert(5, ".");
+                    res += date + "\t";
+
+                    fs.Read(two, 0, 2); // Получаем BlockAddress
+                    temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(temp, SeekOrigin.Begin);
+                    fs.Read(twenty, 0, 20);
+                    res += GetValidString(twenty);
+                    fs.Read(four, 0, 4);
+                    res += "." + GetValidString(four) + "\n";
+                }
+
+                return res;
+            }
+        }
+        public byte[] ReadFileBlock(UInt16 iNodeOffset)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                byte[] buffer = new byte[2];
+                fs.Seek(iNodeOffset + 10, SeekOrigin.Begin);
+                fs.Read(buffer, 0, 2);
+                UInt16 size = (UInt16)BitConverter.ToInt16(buffer, 0);
+                fs.Seek(iNodeOffset + 30, SeekOrigin.Begin);
+                fs.Read(buffer, 0, 2);
+                UInt16 blockOffset = (UInt16)BitConverter.ToInt16(buffer, 0);
+
+                buffer = new byte[size];
+                fs.Seek(blockOffset + 24, SeekOrigin.Begin);
+                fs.Read(buffer, 0, size);
+
+                return buffer;
+            }
+        }
         public void CreateFile(string name, string expansion)
         {
             UInt16 addr = WriteNewINode("TFrw----");
@@ -65,6 +148,13 @@ namespace OS_kurs
                     fs.Write(BitConverter.GetBytes((UInt16)0), 0, INode.SizeInBlocksSize);
                     fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.CreationTimeSize);
                     fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.ModificationTimeSize);
+
+                    /*fs.Seek(60 + 10, SeekOrigin.Begin); // Считаем размер директории
+                    fs.Read(buffer, 0, 2);
+                    UInt16 count = (UInt16)BitConverter.ToInt16(buffer, 0);
+                    count += 2;
+                    fs.Seek(60 + 10, SeekOrigin.Begin); // Добавляем размер директории
+                    fs.Write(BitConverter.GetBytes(count), 0, INode.UserIDSize);*/
                     return address;
                 }
                 return 0;
@@ -90,13 +180,14 @@ namespace OS_kurs
 
                 fs.Read(buffer, 0, 2); // Проверяем продолжение списка
                 UInt16 newBladdress = (UInt16)BitConverter.ToInt16(buffer, 0);
-                if (newBladdress == 0)
+
+                if (newBladdress == 0) // Затираем адрес в ListBlock
                 {
                     fs.Seek(bladdress + (freeBlockCount + 1) * 2, SeekOrigin.Begin);
                     fs.Read(buffer, 0, 2);
                     newBladdress = (UInt16)BitConverter.ToInt16(buffer, 0);
 
-                    fs.Seek(-2, SeekOrigin.Current); // Затираем адрес в ListBlock
+                    fs.Seek(-2, SeekOrigin.Current);
                     fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
                 } // TODO
 
@@ -105,7 +196,7 @@ namespace OS_kurs
                 fs.Seek(newBladdress + 20, SeekOrigin.Begin);
                 fs.Write(Encoding.UTF8.GetBytes(expansion), 0, expansion.Length);
 
-                fs.Seek(newBladdress + 512, SeekOrigin.Begin); // Заполняем нулями до конца блока
+                fs.Seek(newBladdress + 510, SeekOrigin.Begin); // Заполняем нулями до конца блока
                 fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
 
                 fs.Seek(address + 10, SeekOrigin.Begin); // Записываем атрибуты INode
@@ -126,7 +217,11 @@ namespace OS_kurs
 
                 UInt16 bladdress = (UInt16)BitConverter.ToInt16(buffer, 0);
 
-                fs.Seek(bladdress + 24, SeekOrigin.Begin); // Записываем данные
+                fs.Seek(60 + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Read(buffer, 0, 2);
+                UInt16 count = (UInt16)BitConverter.ToInt16(buffer, 0);
+
+                fs.Seek(bladdress + 24 + count, SeekOrigin.Begin); // Записываем данные
                 fs.Write(data, 0, data.Length);
 
                 if (data.Length < 488)
@@ -136,8 +231,8 @@ namespace OS_kurs
                 }
 
                 fs.Seek(address + 10, SeekOrigin.Begin); // Записываем атрибуты INode
-                fs.Write(BitConverter.GetBytes(data.Length), 0, INode.SizeInBytesSize);
-                fs.Write(BitConverter.GetBytes((data.Length + 24) / 512 + 1), 0, INode.SizeInBlocksSize);
+                fs.Write(BitConverter.GetBytes(count + data.Length), 0, INode.SizeInBytesSize);
+                fs.Write(BitConverter.GetBytes((count + data.Length + 24) / 512 + 1), 0, INode.SizeInBlocksSize);
                 fs.Seek(address + 22, SeekOrigin.Begin);
                 fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.ModificationTimeSize);
             }
