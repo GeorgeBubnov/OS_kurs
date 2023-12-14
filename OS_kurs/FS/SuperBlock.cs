@@ -16,10 +16,10 @@ namespace OS_kurs.FS
         public const string Type = "GeorgeFS";
         public const UInt16 SizeInBlocks = 111;
         public const UInt16 IListSize = 100;
-        public static UInt16 FreeBlockCount = 100;
+        public static UInt16 FreeBlockCount = 98;
         public static UInt16 FreeINodeCount = 99;
         public const UInt16 BlockSize = 512;
         public static UInt16[] ListINode = new UInt16[20];
-        public static UInt16 ListBlock = 5480;
+        public static UInt16 ListBlock = 5992;
     }
 }

@@ -14,13 +14,33 @@ namespace OS_kurs
 
             Console.WriteLine("Hello World!");
             FileSystem sys = new FileSystem();
-            if (sys.IsLogin("ro ot", "123"))
+
+            string login = "";
+            string password = "";
+            do
             {
-                Console.WriteLine("\nTRUE\n");
-            }
+                Console.Write("Введите логин: ");
+                login = Console.ReadLine();
+                Console.Write("Введите пароль: ");
+                password = Console.ReadLine();
+                if (sys.IsLogin(login, password) == false)
+                    Console.WriteLine("Ошибка! Неверное значение\n");
+            } while (!sys.IsLogin(login, password));
+            
 
 
-            //Console.WriteLine(DateTime.Now.ToString("ddmmyyyy"));
+
+
+
+
+
+
+
+
+
+
+
+            Console.WriteLine(DateTime.Now.ToString("ddMMyyyy"));
             Console.ReadLine();
         }
     }

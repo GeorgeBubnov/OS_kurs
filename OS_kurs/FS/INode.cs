@@ -18,8 +18,8 @@ namespace OS_kurs.FS
         public byte GroupID;
         public UInt16 SizeInBytes;
         public UInt16 SizeInBlocks;
-        public string CreationTime;
-        public string ModificationTime;
+        public string CreationDate;
+        public string ModificationDate;
         public UInt16[] BlocksAddresses = new UInt16[10];
 
         public INode()
@@ -29,22 +29,22 @@ namespace OS_kurs.FS
             GroupID = 0;
             SizeInBytes = 24;
             SizeInBlocks = 1;
-            CreationTime = DateTime.Now.ToString("ddmmyyyy");
-            ModificationTime = DateTime.Now.ToString("ddmmyyyy");
+            CreationDate = DateTime.Now.ToString("ddMMyyyy");
+            ModificationDate = DateTime.Now.ToString("ddMMyyyy");
             BlocksAddresses = new UInt16[10];
             BlocksAddresses[0] = 5480;
         }
 
         public INode(string access, byte userID, byte groupID, UInt16 sizeInBytes, UInt16 sizeInBlocks, 
-            string creationTime, string modificationTime, UInt16[] blocksAddresses)
+            string creationDate, string modificationDate, UInt16[] blocksAddresses)
         {
             Access = access;
             UserID = userID;
             GroupID = groupID;
             SizeInBytes = sizeInBytes;
             SizeInBlocks = sizeInBlocks;
-            CreationTime = creationTime;
-            ModificationTime = modificationTime;
+            CreationDate = creationDate;
+            ModificationDate = modificationDate;
             BlocksAddresses = blocksAddresses;
         }
     }
