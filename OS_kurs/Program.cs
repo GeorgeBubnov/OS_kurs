@@ -39,7 +39,7 @@ namespace OS_kurs
                         Console.Write(sys.ReadDirectory());
                         break;
 
-                    case string s when Regex.IsMatch(s, @"^touch ([a-zA-Z0-9]+( *[a-zA-Z0-9])*(\.[a-zA-Z0-9]+))$"):
+                    case string s when Regex.IsMatch(s, @"^touch [a-zA-Z0-9]+( *[a-zA-Z0-9])*\.[a-zA-Z0-9]+$"):
                         string fullName = Regex.Replace(s, @"^touch ", "");
 
                         string name = Path.GetFileNameWithoutExtension(fullName);
@@ -50,16 +50,22 @@ namespace OS_kurs
 
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^chmod [r\-][w\-][x\-][r\-][w\-][x\-] [a-zA-Z0-9]+( *[a-zA-Z0-9])*\.[a-zA-Z0-9]+$"):
+                        string[] chmodv = Regex.Replace(s, @"^chmod ", "").Split(' ');
+                        if (sys.ChangeRights(chmodv[0], chmodv[1]))
+                            Console.WriteLine("Права изменены успешно!");
+                        break;
+
                     case "help":
 
                         Console.WriteLine(
-                            "ls\tОтображает содержимое корневой директории.\n" +
+                            " ls\tОтображает содержимое корневой директории.\n" +
                             "cp\t<file>\tКопирует файлы  <file> \n" +
-                            "touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
+                            " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
                             "rm\t<file>\tУдаляет указанный файл.\n" +
                             "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +
                             "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
-                            "chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
+                            " chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
