@@ -83,6 +83,11 @@ namespace OS_kurs
                         sys.CopyFile(cpv[0], cpv[1]);
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^cpdir [a-zA-Z0-9]+ [a-zA-Z0-9]+$"):
+                        string[] dcpv = Regex.Replace(s, @"^cpdir ", "").Split(' ');
+                        sys.CopyDir(dcpv[0], dcpv[1]);
+                        break;
+
                     case string s when Regex.IsMatch(s, @"^rm [a-zA-Z0-9]+\.[a-z]+$"):
                         sys.Remove(Regex.Replace(s, @"^rm ", ""));
                         break;
@@ -99,6 +104,7 @@ namespace OS_kurs
                             " mkdir \n" +
                             " cd \n" +
                             " rmdir \n" +
+                            " cpdir \n" + // TODO WITHOUT DATA
                             "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +
                             "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
