@@ -56,6 +56,13 @@ namespace OS_kurs
                             sys.CreateDir(dirName);
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^rmdir [a-zA-Z0-9]+$"):
+                        string ddirName = Regex.Replace(s, @"^rmdir ", "");
+
+                        if (ddirName.Length <= 20)
+                            sys.RemoveDir(ddirName);
+                        break;
+
                     case string s when Regex.IsMatch(s, @"^cd ([a-zA-Z0-9]+|\.)$"):
                         string cdirName = Regex.Replace(s, @"^cd ", "");
 
@@ -91,6 +98,7 @@ namespace OS_kurs
                             " rm\t<file>\tУдаляет указанный файл.\n" +
                             " mkdir \n" +
                             " cd \n" +
+                            " rmdir \n" +
                             "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +
                             "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
