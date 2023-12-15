@@ -49,6 +49,21 @@ namespace OS_kurs
                             sys.CreateFile(name, expansion);
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^mkdir [a-zA-Z0-9]+$"):
+                        string dirName = Regex.Replace(s, @"^mkdir ", "");
+
+                        if (dirName.Length <= 20)
+                            sys.CreateDir(dirName);
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^cd ([a-zA-Z0-9]+|\.)$"):
+                        string cdirName = Regex.Replace(s, @"^cd ", "");
+
+                        if (cdirName.Length <= 20)
+                            if(sys.ChangeDir(cdirName))
+                                Console.WriteLine("Переход прошел успешно!");
+                        break;
+
                     case string s when Regex.IsMatch(s, @"^chmod [r\-][w\-][x\-][r\-][w\-][x\-] [a-zA-Z0-9]+\.[a-z]+$"):
                         string[] chmodv = Regex.Replace(s, @"^chmod ", "").Split(' ');
                         if (sys.ChangeRights(chmodv[0], chmodv[1]))
@@ -69,13 +84,15 @@ namespace OS_kurs
                     case "help":
 
                         Console.WriteLine(
-                            " ls\tОтображает содержимое корневой директории.\n" +
-                            " cp\t<file>\tКопирует файлы  <file> \n" + // TODO Directory
                             " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
+                            " ls\tОтображает содержимое корневой директории.\n" +
+                            " chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
+                            " cp\t<file>\tКопирует файлы  <file> \n" + // TODO Directory
                             " rm\t<file>\tУдаляет указанный файл.\n" +
+                            " mkdir \n" +
+                            " cd \n" +
                             "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +
                             "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
-                            " chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +

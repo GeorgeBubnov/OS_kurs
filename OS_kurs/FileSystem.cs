@@ -21,7 +21,79 @@ namespace OS_kurs
         
         public FileSystem()
         {
-            CreateDrive();
+            //CreateDrive();
+        }
+        public bool ChangeDir(string name)
+        {
+            if(name != ".")
+            {
+                byte[] files = ReadFileBlock(Directory);
+                using (FileStream fs = new FileStream(path, FileMode.Open))
+                {
+                    byte[] two = new byte[2];
+                    byte[] eight = new byte[8];
+                    byte[] one = new byte[1];
+                    byte[] twenty = new byte[20];
+                    byte[] four = new byte[4];
+                    byte[] thirty = new byte[30];
+
+                    fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
+                    fs.Read(two, 0, 2);
+                    UInt16 count = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    for (int i = 0; i < count; i += 2)
+                    {
+                        string res = "";
+                        two[0] = files[i];
+                        two[1] = files[i + 1];
+
+                        UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
+
+                        fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                        fs.Read(one, 0, 1);
+                        UInt16 temp = (UInt16)one[0];
+                        if (temp == UserID)
+                        {
+                            fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                            fs.Read(two, 0, 2);
+                            temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                            fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                            fs.Read(twenty, 0, 20);
+                            res += GetValidString(twenty);
+
+                            if (res == name)
+                            {
+                                Directory = addr;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Open))
+                {
+                    byte[] buffer = new byte[2];
+                    fs.Seek(Directory + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                    fs.Read(buffer, 0, 2);
+                    UInt16 temp = (UInt16)BitConverter.ToInt16(buffer, 0);
+
+                    fs.Seek(temp + 22, SeekOrigin.Begin); // Считываем предыдую директорию
+                    fs.Read(buffer, 0, 2);
+                    Directory = (UInt16)BitConverter.ToInt16(buffer, 0);
+                    return true;
+                }
+                    
+            }
+            return false;
+        }
+        public void CreateDir(string name)
+        {
+            UInt16 addr = WriteNewINode("TDrw----");
+            WriteNewFullName(addr, name, "dir");
+            WriteDataInBlock(Directory, BitConverter.GetBytes(addr));
         }
         public void Remove(string fullname)
         {
@@ -246,7 +318,7 @@ namespace OS_kurs
                 byte[] twenty = new byte[20];
                 byte[] four = new byte[4];
 
-                fs.Seek(60 + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
                 fs.Read(two, 0, 2);
                 UInt16 count = (UInt16)BitConverter.ToInt16(two, 0);
 
@@ -293,7 +365,9 @@ namespace OS_kurs
                     fs.Read(twenty, 0, 20);
                     res += GetValidString(twenty);
                     fs.Read(four, 0, 4);
-                    res += "." + GetValidString(four) + "\n";
+                    if (four[0] != 0)
+                        res += "." + GetValidString(four);
+                    res += "\n";
                 }
 
                 return res;
@@ -406,9 +480,15 @@ namespace OS_kurs
                 fs.Seek(newBladdress, SeekOrigin.Begin); // Записываем имя и расширение
                 fs.Write(Encoding.UTF8.GetBytes(name), 0, name.Length);
                 fs.Seek(newBladdress + 20, SeekOrigin.Begin);
-                fs.Write(Encoding.UTF8.GetBytes(expansion), 0, expansion.Length);
+                if (expansion != "dir")
+                    fs.Write(Encoding.UTF8.GetBytes(expansion), 0, expansion.Length);
+                else
+                {
+                    fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+                    fs.Write(BitConverter.GetBytes(Directory), 0, 2);
+                }
 
-                fs.Seek(newBladdress + 510, SeekOrigin.Begin); // Заполняем нулями до конца блока
+                fs.Seek(newBladdress + 510, SeekOrigin.Begin); // Заполняем нулями до конца блока TODO DELETE
                 fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
 
                 fs.Seek(address + 10, SeekOrigin.Begin); // Записываем атрибуты INode
@@ -429,7 +509,7 @@ namespace OS_kurs
 
                 UInt16 bladdress = (UInt16)BitConverter.ToInt16(buffer, 0);
 
-                fs.Seek(60 + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
                 fs.Read(buffer, 0, 2);
                 UInt16 count = (UInt16)BitConverter.ToInt16(buffer, 0);
 
@@ -438,7 +518,7 @@ namespace OS_kurs
 
                 if (data.Length < 488)
                 {
-                    fs.Seek(bladdress + 512, SeekOrigin.Begin); // Заполняем нулями до конца блока
+                    fs.Seek(bladdress + 510, SeekOrigin.Begin); // Заполняем нулями до конца блока TODO DELETE
                     fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
                 }
 
