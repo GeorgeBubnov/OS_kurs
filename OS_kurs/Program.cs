@@ -61,13 +61,18 @@ namespace OS_kurs
                         sys.CopyFile(cpv[0], cpv[1]);
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^rm [a-zA-Z0-9]+\.[a-z]+$"):
+                        sys.Remove(Regex.Replace(s, @"^rm ", ""));
+                        break;
+
+
                     case "help":
 
                         Console.WriteLine(
                             " ls\tОтображает содержимое корневой директории.\n" +
-                            " cp\t<file>\tКопирует файлы  <file> \n" +
+                            " cp\t<file>\tКопирует файлы  <file> \n" + // TODO Directory
                             " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
-                            "rm\t<file>\tУдаляет указанный файл.\n" +
+                            " rm\t<file>\tУдаляет указанный файл.\n" +
                             "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +
                             "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
                             " chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
