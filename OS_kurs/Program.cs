@@ -39,7 +39,7 @@ namespace OS_kurs
                         Console.Write(sys.ReadDirectory());
                         break;
 
-                    case string s when Regex.IsMatch(s, @"^touch [a-zA-Z0-9]+( *[a-zA-Z0-9])*\.[a-zA-Z0-9]+$"):
+                    case string s when Regex.IsMatch(s, @"^touch [a-zA-Z0-9]+\.[a-z]+$"):
                         string fullName = Regex.Replace(s, @"^touch ", "");
 
                         string name = Path.GetFileNameWithoutExtension(fullName);
@@ -47,20 +47,25 @@ namespace OS_kurs
 
                         if (name.Length <= 20 && expansion.Length <= 4)
                             sys.CreateFile(name, expansion);
-
                         break;
 
-                    case string s when Regex.IsMatch(s, @"^chmod [r\-][w\-][x\-][r\-][w\-][x\-] [a-zA-Z0-9]+( *[a-zA-Z0-9])*\.[a-zA-Z0-9]+$"):
+                    case string s when Regex.IsMatch(s, @"^chmod [r\-][w\-][x\-][r\-][w\-][x\-] [a-zA-Z0-9]+\.[a-z]+$"):
                         string[] chmodv = Regex.Replace(s, @"^chmod ", "").Split(' ');
                         if (sys.ChangeRights(chmodv[0], chmodv[1]))
                             Console.WriteLine("Права изменены успешно!");
+                        break;
+
+                    // Только для файлов
+                    case string s when Regex.IsMatch(s, @"^cp [a-zA-Z0-9]+\.[a-z]+ [a-zA-Z0-9]+\.[a-z]+$"):
+                        string[] cpv = Regex.Replace(s, @"^cp ", "").Split(' ');
+                        sys.CopyFile(cpv[0], cpv[1]);
                         break;
 
                     case "help":
 
                         Console.WriteLine(
                             " ls\tОтображает содержимое корневой директории.\n" +
-                            "cp\t<file>\tКопирует файлы  <file> \n" +
+                            " cp\t<file>\tКопирует файлы  <file> \n" +
                             " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
                             "rm\t<file>\tУдаляет указанный файл.\n" +
                             "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +

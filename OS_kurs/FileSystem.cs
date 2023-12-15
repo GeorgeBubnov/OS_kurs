@@ -1,6 +1,7 @@
 ﻿using OS_kurs.FS;
 using System;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
@@ -23,6 +24,88 @@ namespace OS_kurs
             //CreateDrive();
         }
 
+        public void CopyFile(string name1, string name2)
+        {
+            byte[] files = ReadFileBlock(Directory);
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                byte[] two = new byte[2];
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                byte[] twenty = new byte[20];
+                byte[] four = new byte[4];
+                byte[] thirty = new byte[30];
+
+                fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Read(two, 0, 2);
+                UInt16 count = (UInt16)BitConverter.ToInt16(two, 0);
+
+                for (int i = 0; i < count; i += 2)
+                {
+                    string res = "";
+                    two[0] = files[i];
+                    two[1] = files[i + 1];
+
+                    UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 temp = (UInt16)one[0];
+                    if (temp == UserID)
+                    {
+                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                        fs.Read(two, 0, 2);
+                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                        fs.Read(twenty, 0, 20);
+                        res += GetValidString(twenty);
+                        fs.Read(four, 0, 4);
+                        res += "." + GetValidString(four);
+
+                        if (res == name1)
+                        {
+                            fs.Seek(addr, SeekOrigin.Begin); // Получаем данные из копируемого INode
+                            fs.Read(thirty, 0, 30);
+
+                            int j = 0;
+                            UInt16 addrNew = 0;
+                            while (j < 20 && addrNew == 0)
+                            {
+                                fs.Seek(18 + j * 2, SeekOrigin.Begin);
+                                fs.Read(two, 0, 2);
+                                addrNew = (UInt16)BitConverter.ToInt16(two, 0);
+                                j++;
+                            }
+                            if (addrNew != 0)
+                            {
+                                // Superblock
+                                fs.Seek(-2, SeekOrigin.Current); // Затираем адрес в ListINode
+                                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+
+                                fs.Seek(14, SeekOrigin.Begin); // Уменьшаем FreeINodeCount
+                                fs.Read(two, 0, 2);
+                                UInt16 freeINodeCount = (UInt16)BitConverter.ToInt16(two, 0);
+                                freeINodeCount -= 1;
+                                fs.Seek(-2, SeekOrigin.Current);
+                                fs.Write(BitConverter.GetBytes(freeINodeCount), 0, 2);
+
+                                //INode
+                                fs.Seek(addrNew, SeekOrigin.Begin);
+                                fs.Write(thirty, 0, 30);
+
+                                string name = Path.GetFileNameWithoutExtension(name2);
+                                string expansion = Path.GetExtension(name2).Split('.')[1];
+                                fs.Close();
+                                WriteNewFullName(addrNew, name, expansion);
+                                WriteDataInBlock(Directory, BitConverter.GetBytes(addrNew));
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         public bool ChangeRights(string rights, string fullname)
         {
             byte[] files = ReadFileBlock(Directory);
