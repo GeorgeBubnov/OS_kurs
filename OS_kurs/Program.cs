@@ -92,9 +92,17 @@ namespace OS_kurs
                         sys.Remove(Regex.Replace(s, @"^rm ", ""));
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^echo .+ >> [a-zA-Z0-9]+\.[a-z]+$"):
+                        //Если добавить в конец
+                        string EchoVal = Regex.Replace(s, @"^echo ", "");
+                        string Values = Regex.Replace(EchoVal, @" >> [a-zA-Z0-9]+\.[a-z]+$", "");
+                        string NameFile = Regex.Replace(EchoVal, @".+ >> ", "");
+                        sys.WriteInFile(NameFile, Values);
+                        break;
+
 
                     case "help":
-
+                        // TODO Пресматривать список INode
                         Console.WriteLine(
                             " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
                             " ls\tОтображает содержимое корневой директории.\n" +
@@ -105,7 +113,7 @@ namespace OS_kurs
                             " cd \n" +
                             " rmdir \n" +
                             " cpdir \n" + // TODO WITHOUT DATA
-                            "echo\t<text> > <file>\tЗаписывает текст <text> в файл <file>. Может быть использована для дописывания в конец файла с >>.\n" +
+                            " echo\t<text> > <file>\t Может быть использована для дописывания в конец файла с >>.\n" + // TODO BIGDATA
                             "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
