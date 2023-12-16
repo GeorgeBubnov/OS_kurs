@@ -1062,6 +1062,29 @@ namespace OS_kurs
                 }
             }
         }
+        public void ChangeGroup(string login, string group)
+        {
+            if (Convert.ToInt32(group) > 255 || Convert.ToInt32(group) < 0)
+                return;
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                for (int i = 5062; i < 5480; i += 42)
+                {
+                    byte[] buffer = new byte[20];
+                    fs.Seek(i, SeekOrigin.Begin);
+                    fs.Read(buffer, 0, 20);
+
+                    if (GetValidString(buffer) == login) // Находим пользователя
+                    {
+                        fs.Seek(i - 1, SeekOrigin.Begin);
+                        byte[] gid = new byte[1];
+                        gid[0] = Convert.ToByte(group);
+                        fs.Write(gid, 0, 1);
+                        return;
+                    }
+                }
+            }
+        }
         public string GetValidString(byte[] buffer) { return Encoding.UTF8.GetString(buffer).Split('\0')[0]; }
         public void CreateDrive()
         {
@@ -1160,7 +1183,8 @@ namespace OS_kurs
                 fs.Write(Encoding.UTF8.GetBytes(fnode.Name), 0, fnode.Name.Length);
                 fs.Seek(12, SeekOrigin.Current);
                 fs.Write(BitConverter.GetBytes(0), 0, 1);
-                fs.Write(Encoding.UTF8.GetBytes(fnode.Expansion), 0, fnode.Expansion.Length);
+                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+                fs.Write(BitConverter.GetBytes((UInt16)60), 0, 2);
                 fs.Seek(5992, SeekOrigin.Begin);
                 fs.Write(BitConverter.GetBytes(0), 0, 1);
             }

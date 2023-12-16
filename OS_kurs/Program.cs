@@ -125,6 +125,14 @@ namespace OS_kurs
                         Login();
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^chgroup [a-zA-Z0-9]+ [0-9]+$"):
+                        string[] gv = Regex.Replace(s, @"^chgroup ", "").Split(' ');
+                        sys.ChangeGroup(gv[0], gv[1]);
+                        break;
+
+                    case "exit":
+                        return;
+
                     case "help":
 // TODO Пресматривать список INode
                         Console.WriteLine(
@@ -145,12 +153,8 @@ namespace OS_kurs
                             " users\tОтображает всех существующих пользователей в системе\n" +
                             " adduser \n" +
                             " login \n" +
-                            "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
-                            "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
-                            "userdel\t<username>\tУдаляет пользователя с указанным именем <username>.\n" +
-                            "login\t<username> <passowrd>\tВход в систему под указанным именем пользователя <username> с использованием пароля <passowrd>.\n" +
-                            "logout\t-\tВыход из системы.\n" +
-                            "clear\t\tОчистить консоль\n"
+                            " chgroup \n" + // TODO FUNCTIONALITY чтобы читались права доступа в ls и т.д.
+                            " exit \n"
                             );
                         break;
 
