@@ -100,6 +100,9 @@ namespace OS_kurs
                         sys.WriteInFile(NameFile, Values);
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^cat [a-zA-Z0-9]+\.[a-z]+$"):
+                        Console.WriteLine(sys.ReadFile(Regex.Replace(s, @"^cat ", "")));
+                        break;
 
                     case "help":
                         // TODO Пресматривать список INode
@@ -114,7 +117,7 @@ namespace OS_kurs
                             " rmdir \n" +
                             " cpdir \n" + // TODO WITHOUT DATA
                             " echo\t<text> > <file>\t Может быть использована для дописывания в конец файла с >>.\n" + // TODO BIGDATA
-                            "cat\t<file>\tВыводит текст из файла <file> в консоль.\n" +
+                            " cat\t<file>\tВыводит текст из файла <file> в консоль.\n" + // TODO BIGDATA
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
