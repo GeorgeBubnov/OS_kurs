@@ -109,13 +109,23 @@ namespace OS_kurs
                         Console.WriteLine(sys.ReadFile(Regex.Replace(s, @"^cat ", "")));
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^rename [a-zA-Z0-9]+\.[a-z]+ [a-zA-Z0-9]+\.[a-z]+$"):
+                        string[] rv = Regex.Replace(s, @"^rename ", "").Split(' ');
+                        sys.Rename(rv[0], rv[1]);
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^renamedir [a-zA-Z0-9]+ [a-zA-Z0-9]+$"):
+                        string[] rdv = Regex.Replace(s, @"^renamedir ", "").Split(' ');
+                        sys.RenameDir(rdv[0], rdv[1]);
+                        break;
+
                     case "help":
                         // TODO Пресматривать список INode
                         Console.WriteLine(
                             " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
                             " ls\tОтображает содержимое корневой директории.\n" +
                             " chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
-                            " cp\t<file>\tКопирует файлы  <file> \n" + // TODO Directory
+                            " cp\t<file>\tКопирует файлы  <file> \n" +
                             " rm\t<file>\tУдаляет указанный файл.\n" +
                             " mkdir \n" +
                             " cd \n" +
@@ -123,9 +133,10 @@ namespace OS_kurs
                             " cpdir \n" + // TODO WITHOUT DATA
                             " echo\t<text> > <file>\t Может быть использована для дописывания в конец файла с >>.\n" + // TODO BIGDATA
                             " cat\t<file>\tВыводит текст из файла <file> в консоль.\n" + // TODO BIGDATA
-                            " move \n" + // MB TODO with slash /
+                            " move \n" + // MB TODO with slash / || TODO Directory
+                            " rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
+                            " renamedir \n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
-                            "rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
                             "userdel\t<username>\tУдаляет пользователя с указанным именем <username>.\n" +
                             "login\t<username> <passowrd>\tВход в систему под указанным именем пользователя <username> с использованием пароля <passowrd>.\n" +
