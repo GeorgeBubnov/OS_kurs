@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace OS_kurs
@@ -8,6 +10,7 @@ namespace OS_kurs
     internal static class Program
     {
         static FileSystem sys;
+        static OperatingSystem os;
         static string login = "";
         static string password = "";
         static void Main()
@@ -18,7 +21,7 @@ namespace OS_kurs
 
             Console.WriteLine("Hello World!");
             sys = new FileSystem();
-
+            os = new OperatingSystem();
 
             Login();
 
@@ -154,8 +157,71 @@ namespace OS_kurs
                             " adduser \n" +
                             " login \n" +
                             " chgroup \n" + // TODO FUNCTIONALITY чтобы читались права доступа в ls и т.д.
-                            " exit \n"
+                            " exit \n" +
+                            " ps\t\tОтобразить все существующие процессы. \n" +
+                            " kill \n" +
+                            " mp\t<time> <priority>\tСоздать новый процесс с временем работы <time> и приоритетом <priority>. Приоритет можно не указывать. \n" +
+                            " chpt\t<id> <time>\tИзменить время работы процесса с идентификатором <id> на время <time>. \n" +
+                            " chpp\t<id> <priorety>\tИзменить приоритет процесса с идентификатором <id> на приоритет <priorety>. \n" +
+                            " gen\t<count>\tСгенерировать количество <count> новый процессов. \n" +
+                            " top\t\tОтображение всех существующих процессов в реальном времени в порядке очереди. \n"
                             );
+                        break;
+
+                    case "ps":
+                        Console.Write(os.GetProcess());
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^kill \d+$"):
+                        os.Remove(Convert.ToInt32(Regex.Replace(s, @"^kill ", "")));
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^mp \d+( \d+)?$"):
+                        string makep = Regex.Replace(s, @"^mp ", "");
+                        if (Regex.IsMatch(s, @"^mp \d+ \d+$"))
+                        {
+                            int time = int.Parse(makep.Split(' ')[0]);
+                            sbyte pri = sbyte.Parse(makep.Split(' ')[1]);
+                            os.AddNewProcess(time, pri);
+                        }
+                        else
+                        {
+                            int time = int.Parse(makep);
+                            os.AddNewProcess(time);
+                        }
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^chpt \d+ \d+$"):
+                        string cht = Regex.Replace(s, @"^chpt ", "");
+                        {
+                            int id = int.Parse(cht.Split(' ')[0]);
+                            int time = int.Parse(cht.Split(' ')[1]);
+                            os.ChangeProcessWorkingTime(id, time);
+                        }
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^chpp \d+ ( |-)\d+$"):
+                        string chp = Regex.Replace(s, @"^chpp ", "");
+                        {
+                            var id = int.Parse(chp.Split(' ')[0]);
+                            var pri = sbyte.Parse(chp.Split(' ')[1]);
+                            os.ChangeProcessPriorety(id, pri);
+                        }
+                        break;
+
+                    case string s when Regex.IsMatch(s, @"^gen \d+$"):
+                        int count = int.Parse(Regex.Replace(s, @"^gen ", ""));
+                        {
+                            Random random = new Random();
+                            while (count-- > 0)
+                                os.AddNewProcess(random.Next(0, 1000), (sbyte)random.Next(-20, 19));
+                        }
+                        break;
+                    
+                    case "top":
+                        WriteTopProcess();
+                        while (os.IsNotEmpty())
+                            Console.ReadKey(true);
                         break;
 
                     default:
@@ -163,22 +229,7 @@ namespace OS_kurs
                         break;
                 }
             }
-
-
-
-
-
-
-
-
-
-
-
-
-            Console.WriteLine(DateTime.Now.ToString("ddMMyyyy"));
-            //Console.ReadLine();
         }
-
         static void Login()
         {
             do
@@ -190,6 +241,19 @@ namespace OS_kurs
                 if (sys.IsLogin(login, password) == false)
                     Console.WriteLine("Ошибка! Неверное значение\n");
             } while (!sys.IsLogin(login, password));
+        }
+        static async void WriteTopProcess()
+        {
+            Console.Clear();
+            await Task.Run(() =>
+            {
+                while (os.IsNotEmpty())
+                {
+                    Console.Write(os.GetProcess());
+                    Thread.Sleep(500);
+                    Console.Clear();
+                }
+            });
         }
     }
 }

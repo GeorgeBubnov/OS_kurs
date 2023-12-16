@@ -377,7 +377,6 @@ namespace OS_kurs
 
                 for (int i = 0; i < count; i += 2)
                 {
-                    string res = "";
                     two[0] = files[i];
                     two[1] = files[i + 1];
 
