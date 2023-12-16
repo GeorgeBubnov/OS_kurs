@@ -175,6 +175,81 @@ namespace OS_kurs
                 }
             }
         }
+        public void MoveFile(string name, string dir)
+        {
+            byte[] files = ReadFileBlock(Directory);
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                byte[] two = new byte[2];
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                byte[] twenty = new byte[20];
+                byte[] four = new byte[4];
+                byte[] thirty = new byte[30];
+
+                fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Read(two, 0, 2);
+                UInt16 count = (UInt16)BitConverter.ToInt16(two, 0);
+
+                for (int i = 0; i < count; i += 2)
+                {
+                    string res = "";
+                    two[0] = files[i];
+                    two[1] = files[i + 1];
+
+                    UInt16 inode = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(inode + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 temp = (UInt16)one[0];
+                    if (temp == UserID)
+                    {
+                        fs.Seek(inode + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                        fs.Read(two, 0, 2);
+                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                        fs.Read(twenty, 0, 20);
+                        res += GetValidString(twenty);
+                        fs.Read(four, 0, 4);
+                        res += "." + GetValidString(four);
+
+                        if (res == name)
+                        {
+                            fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
+                            count -= 2;
+                            fs.Write(BitConverter.GetBytes(count), 0, 2);
+
+                            fs.Seek(Directory + 30, SeekOrigin.Begin);
+                            fs.Read(two, 0, 2);
+                            UInt16 blockOffset = (UInt16)BitConverter.ToInt16(two, 0);
+
+                            if (count - i > 0)
+                            {
+                                fs.Seek(blockOffset + 26 + i, SeekOrigin.Begin); // Переходим на последующие адреса
+                                byte[] buffer = new byte[count - i];
+                                fs.Read(buffer, 0, count - i);
+                                fs.Seek(-2, SeekOrigin.Current);
+                                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+
+                                fs.Seek(blockOffset + 24 + i, SeekOrigin.Begin); // Переходим на место адреса удаляемого файла
+                                fs.Write(buffer, 0, count - i);
+                            }
+                            else
+                            {
+                                fs.Seek(blockOffset + 24 + i, SeekOrigin.Begin); // Переходим на место адреса удаляемого файла
+                                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+                            }
+
+                            fs.Close();
+                            ChangeDir(dir);
+                            WriteDataInBlock(Directory, BitConverter.GetBytes(inode));
+                            return;
+                        }
+                    }
+                }
+            }
+        }
         public void RemoveDir(string fullname)
         {
             byte[] files = ReadFileBlock(Directory);

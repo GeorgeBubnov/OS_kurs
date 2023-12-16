@@ -83,6 +83,11 @@ namespace OS_kurs
                         sys.CopyFile(cpv[0], cpv[1]);
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^move [a-zA-Z0-9]+\.[a-z]+ ([a-zA-Z0-9]+|\.)$"):
+                        string[] mv = Regex.Replace(s, @"^move ", "").Split(' ');
+                        sys.MoveFile(mv[0], mv[1]);
+                        break;
+
                     case string s when Regex.IsMatch(s, @"^cpdir [a-zA-Z0-9]+ [a-zA-Z0-9]+$"):
                         string[] dcpv = Regex.Replace(s, @"^cpdir ", "").Split(' ');
                         sys.CopyDir(dcpv[0], dcpv[1]);
@@ -118,6 +123,7 @@ namespace OS_kurs
                             " cpdir \n" + // TODO WITHOUT DATA
                             " echo\t<text> > <file>\t Может быть использована для дописывания в конец файла с >>.\n" + // TODO BIGDATA
                             " cat\t<file>\tВыводит текст из файла <file> в консоль.\n" + // TODO BIGDATA
+                            " move \n" + // MB TODO with slash /
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
