@@ -119,8 +119,12 @@ namespace OS_kurs
                         sys.RenameDir(rdv[0], rdv[1]);
                         break;
 
+                    case "users":
+                        Console.Write(sys.GetAllUsers());
+                        break;
+
                     case "help":
-                        // TODO Пресматривать список INode
+// TODO Пресматривать список INode
                         Console.WriteLine(
                             " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
                             " ls\tОтображает содержимое корневой директории.\n" +
@@ -136,12 +140,12 @@ namespace OS_kurs
                             " move \n" + // MB TODO with slash / || TODO Directory
                             " rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             " renamedir \n" +
+                            " users\tОтображает всех существующих пользователей в системе\n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
                             "userdel\t<username>\tУдаляет пользователя с указанным именем <username>.\n" +
                             "login\t<username> <passowrd>\tВход в систему под указанным именем пользователя <username> с использованием пароля <passowrd>.\n" +
                             "logout\t-\tВыход из системы.\n" +
-                            "users\tОтображает всех существующих пользователей в системе\n" +
                             "clear\t\tОчистить консоль\n"
                             );
                         break;

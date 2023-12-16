@@ -1006,13 +1006,13 @@ namespace OS_kurs
 
                         if(exPassword == password)
                         {
-                            fs.Seek(-2, SeekOrigin.Current);
+                            fs.Seek(i-2, SeekOrigin.Current);
                             fs.Read(buffer, 0, 1);
 
-                            UserID = (byte)BitConverter.ToInt16(buffer, 0);
+                            UserID = buffer[0];
                             fs.Read(buffer, 0, 1);
 
-                            GroupID = (byte)BitConverter.ToInt16(buffer, 0);
+                            GroupID = buffer[0];
                             return true;
                         }
                     }
@@ -1020,6 +1020,26 @@ namespace OS_kurs
             }
             
             return false;
+        }
+        public string GetAllUsers()
+        {
+            string res = "";
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                for (int i = 5062; i < 5480; i += 42)
+                {
+                    byte[] buffer = new byte[20];
+                    fs.Seek(i, SeekOrigin.Begin);
+                    fs.Read(buffer, 0, 20);
+
+                    if (GetValidString(buffer) == "")
+                        return res;
+
+                    res += GetValidString(buffer);
+                    res += "\n";
+                }
+            }
+            return res;
         }
         public string GetValidString(byte[] buffer) { return Encoding.UTF8.GetString(buffer).Split('\0')[0]; }
         public void CreateDrive()
