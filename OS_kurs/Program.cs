@@ -8,6 +8,8 @@ namespace OS_kurs
     internal static class Program
     {
         static FileSystem sys;
+        static string login = "";
+        static string password = "";
         static void Main()
         {
             /*Application.EnableVisualStyles();
@@ -15,23 +17,14 @@ namespace OS_kurs
             Application.Run(new Form1());*/
 
             Console.WriteLine("Hello World!");
-            FileSystem sys = new FileSystem();
+            sys = new FileSystem();
 
-            /*string login = "";
-            string password = "";
-            do
-            {
-                Console.Write("Введите логин: ");
-                login = Console.ReadLine();
-                Console.Write("Введите пароль: ");
-                password = Console.ReadLine();
-                if (sys.IsLogin(login, password) == false)
-                    Console.WriteLine("Ошибка! Неверное значение\n");
-            } while (!sys.IsLogin(login, password));*/
+
+            Login();
 
             while (true)
             {
-                Console.Write("root>");
+                Console.Write($"{login}>");
 
                 switch (Console.ReadLine())
                 {
@@ -123,6 +116,15 @@ namespace OS_kurs
                         Console.Write(sys.GetAllUsers());
                         break;
 
+                    case string s when Regex.IsMatch(s, @"^adduser [a-zA-Z0-9]+ [a-zA-Z0-9]+$"):
+                        string[] auv = Regex.Replace(s, @"^adduser ", "").Split(' ');
+                        sys.AddUser(auv[0], auv[1]);
+                        break;
+
+                    case "login":
+                        Login();
+                        break;
+
                     case "help":
 // TODO Пресматривать список INode
                         Console.WriteLine(
@@ -141,6 +143,8 @@ namespace OS_kurs
                             " rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
                             " renamedir \n" +
                             " users\tОтображает всех существующих пользователей в системе\n" +
+                            " adduser \n" +
+                            " login \n" +
                             "chown\t<user> <file>\tИзменяет владельца (<user>) файла <file>.\n" +
                             "useradd\t<username> <passowrd> <admin>\tСоздает нового пользователя с указанным именем <username>, паролем <passowrd> и правами администратора true или false в <admin>.\n" +
                             "userdel\t<username>\tУдаляет пользователя с указанным именем <username>.\n" +
@@ -169,6 +173,19 @@ namespace OS_kurs
 
             Console.WriteLine(DateTime.Now.ToString("ddMMyyyy"));
             //Console.ReadLine();
+        }
+
+        static void Login()
+        {
+            do
+            {
+                Console.Write("Введите логин: ");
+                login = Console.ReadLine();
+                Console.Write("Введите пароль: ");
+                password = Console.ReadLine();
+                if (sys.IsLogin(login, password) == false)
+                    Console.WriteLine("Ошибка! Неверное значение\n");
+            } while (!sys.IsLogin(login, password));
         }
     }
 }

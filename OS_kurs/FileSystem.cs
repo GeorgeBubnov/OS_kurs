@@ -790,7 +790,7 @@ namespace OS_kurs
                     fs.Read(one, 0, 1); // Получаем UserID
                     UInt16 temp = (UInt16)one[0];
 
-                    fs.Seek(5062 + 24 * temp, SeekOrigin.Begin); // Считываем имя пользователя
+                    fs.Seek(5062 + temp * 42, SeekOrigin.Begin); // Считываем имя пользователя
                     fs.Read(twenty, 0, 20);
                     res += GetValidString(twenty) + "\t";
 
@@ -1006,13 +1006,14 @@ namespace OS_kurs
 
                         if(exPassword == password)
                         {
-                            fs.Seek(i-2, SeekOrigin.Current);
-                            fs.Read(buffer, 0, 1);
+                            byte[] id = new byte[1];
+                            fs.Seek(i-2, SeekOrigin.Begin);
+                            fs.Read(id, 0, 1);
 
-                            UserID = buffer[0];
-                            fs.Read(buffer, 0, 1);
+                            UserID = id[0];
+                            fs.Read(id, 0, 1);
 
-                            GroupID = buffer[0];
+                            GroupID = id[0];
                             return true;
                         }
                     }
@@ -1032,14 +1033,34 @@ namespace OS_kurs
                     fs.Seek(i, SeekOrigin.Begin);
                     fs.Read(buffer, 0, 20);
 
-                    if (GetValidString(buffer) == "")
-                        return res;
-
-                    res += GetValidString(buffer);
-                    res += "\n";
+                    if (GetValidString(buffer) != "")
+                        res += GetValidString(buffer) + "\n";
                 }
             }
             return res;
+        }
+        public void AddUser(string login, string password)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                for (int i = 5062; i < 5480; i += 42)
+                {
+                    byte[] buffer = new byte[20];
+                    fs.Seek(i, SeekOrigin.Begin);
+                    fs.Read(buffer, 0, 20);
+
+                    if (GetValidString(buffer) == "") // Находим с пустым именем
+                    {
+                        fs.Seek(i - 2, SeekOrigin.Begin);
+                        fs.Write(BitConverter.GetBytes((byte)((i - 5062) / 42)), 0, 1);
+                        fs.Write(BitConverter.GetBytes((byte)0), 0, 1);
+                        fs.Write(Encoding.UTF8.GetBytes(login), 0, login.Length);
+                        fs.Seek(i + 20, SeekOrigin.Begin);
+                        fs.Write(Encoding.UTF8.GetBytes(password), 0, password.Length);
+                        return;
+                    }
+                }
+            }
         }
         public string GetValidString(byte[] buffer) { return Encoding.UTF8.GetString(buffer).Split('\0')[0]; }
         public void CreateDrive()
@@ -1111,6 +1132,12 @@ namespace OS_kurs
                 fs.Write(BitConverter.GetBytes(0), 0, 1);
                 fs.Write(Encoding.UTF8.GetBytes(UserList[0].Password), 0, UserList[0].Password.Length);
                 
+                /*for(int i = 5060; i < 5480; i += 42)
+                {
+                    fs.Seek(i, SeekOrigin.Begin);
+                    fs.Write(BitConverter.GetBytes(UserList[0].ID), 0, UserNode.IDSize);
+                }*/
+
                 //Test Second User Login And Password
                 /*fs.Seek(17, SeekOrigin.Current);
                 fs.Write(BitConverter.GetBytes(UserList[0].ID), 0, UserNode.IDSize);
