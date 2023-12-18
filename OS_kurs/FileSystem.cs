@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Policy;
 using System.Text;
 using System.Xml.Linq;
 
@@ -49,24 +50,34 @@ namespace OS_kurs
 
                         UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
 
+                        fs.Seek(addr, SeekOrigin.Begin); // Получаем права доступа
+                        fs.Read(eight, 0, 8);
+                        string rights = GetValidString(eight);
+
                         fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
                         fs.Read(one, 0, 1);
                         UInt16 temp = (UInt16)one[0];
-                        if (temp == UserID)
+
+                        fs.Seek(addr + 9, SeekOrigin.Begin); // Получаем UserID
+                        fs.Read(one, 0, 1);
+                        UInt16 gid = (UInt16)one[0];
+
+                        if (!(rights[2] == 'r' && temp == UserID) && !(rights[5] == 'r' && gid == GroupID)) // Проверяет права доступа
+                            continue;
+
+
+                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                        fs.Read(two, 0, 2);
+                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                        fs.Read(twenty, 0, 20);
+                        res += GetValidString(twenty);
+
+                        if (res == name)
                         {
-                            fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
-                            fs.Read(two, 0, 2);
-                            temp = (UInt16)BitConverter.ToInt16(two, 0);
-
-                            fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
-                            fs.Read(twenty, 0, 20);
-                            res += GetValidString(twenty);
-
-                            if (res == name)
-                            {
-                                Directory = addr;
-                                return true;
-                            }
+                            Directory = addr;
+                            return true;
                         }
                     }
                 }
@@ -91,6 +102,29 @@ namespace OS_kurs
         }
         public void CreateDir(string name)
         {
+            if (Directory != 60)
+            {
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                using (FileStream fs = new FileStream(path, FileMode.Open))
+                {
+                    fs.Seek(Directory, SeekOrigin.Begin); // Получаем права доступа
+                    fs.Read(eight, 0, 8);
+                    string rights = GetValidString(eight);
+
+                    fs.Seek(Directory + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 temp = (UInt16)one[0];
+
+                    fs.Seek(Directory + 9, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 gid = (UInt16)one[0];
+
+                    if (!(rights[3] == 'w' && temp == UserID) && !(rights[6] == 'w' && gid == GroupID)) // Проверяет права доступа
+                        return;
+                }
+            }
+
             UInt16 addr = WriteNewINode("TDrw----");
             WriteNewFullName(addr, name, "dir");
             WriteDataInBlock(Directory, BitConverter.GetBytes(addr));
@@ -122,7 +156,7 @@ namespace OS_kurs
                     fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+                    if (temp == UserID || 0 == UserID)
                     {
                         fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
                         fs.Read(two, 0, 2);
@@ -202,7 +236,7 @@ namespace OS_kurs
                     fs.Seek(inode + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+                    if (temp == UserID || 0 == UserID)
                     {
                         fs.Seek(inode + 30, SeekOrigin.Begin); // Получаем BlockAddress
                         fs.Read(two, 0, 2);
@@ -257,7 +291,7 @@ namespace OS_kurs
                     fs.Seek(inode + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+                    if (temp == UserID || 0 == UserID)
                     {
                         fs.Seek(inode + 30, SeekOrigin.Begin); // Получаем BlockAddress
                         fs.Read(two, 0, 2);
@@ -311,7 +345,7 @@ namespace OS_kurs
                     fs.Seek(inode + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+                    if (temp == UserID || 0 == UserID)
                     {
                         fs.Seek(inode + 30, SeekOrigin.Begin); // Получаем BlockAddress
                         fs.Read(two, 0, 2);
@@ -385,7 +419,7 @@ namespace OS_kurs
                     fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+                    if (temp == UserID || 0 == UserID)
                     {
                         fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
                         fs.Read(two, 0, 2);
@@ -462,61 +496,74 @@ namespace OS_kurs
 
                     UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
 
-                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Seek(Directory, SeekOrigin.Begin); // Получаем права доступа
+                    fs.Read(eight, 0, 8);
+                    string rights = GetValidString(eight);
+
+                    fs.Seek(Directory + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+
+                    fs.Seek(Directory + 9, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 gid = (UInt16)one[0];
+
+                    if (!(rights[3] == 'w' && temp == UserID) && !(rights[6] == 'w' && gid == GroupID)) // Проверяет права доступа
+                        continue;
+
+                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    temp = (UInt16)one[0];
+                    
+                    fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                    fs.Read(two, 0, 2);
+                    temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                    fs.Read(twenty, 0, 20);
+                    res = GetValidString(twenty);
+                    fs.Read(four, 0, 4);
+                    res += "." + GetValidString(four);
+
+                    if (res == name1)
                     {
-                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
-                        fs.Read(two, 0, 2);
-                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+                        fs.Seek(addr, SeekOrigin.Begin); // Получаем данные из копируемого INode
+                        fs.Read(thirty, 0, 30);
 
-                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
-                        fs.Read(twenty, 0, 20);
-                        res = GetValidString(twenty);
-                        fs.Read(four, 0, 4);
-                        res += "." + GetValidString(four);
-
-                        if (res == name1)
+                        int j = 0;
+                        UInt16 addrNew = 0;
+                        while (j < 20 && addrNew == 0)
                         {
-                            fs.Seek(addr, SeekOrigin.Begin); // Получаем данные из копируемого INode
-                            fs.Read(thirty, 0, 30);
+                            fs.Seek(18 + j * 2, SeekOrigin.Begin);
+                            fs.Read(two, 0, 2);
+                            addrNew = (UInt16)BitConverter.ToInt16(two, 0);
+                            j++;
+                        }
+                        if (addrNew != 0)
+                        {
+                            // Superblock
+                            fs.Seek(-2, SeekOrigin.Current); // Затираем адрес в ListINode
+                            fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
 
-                            int j = 0;
-                            UInt16 addrNew = 0;
-                            while (j < 20 && addrNew == 0)
-                            {
-                                fs.Seek(18 + j * 2, SeekOrigin.Begin);
-                                fs.Read(two, 0, 2);
-                                addrNew = (UInt16)BitConverter.ToInt16(two, 0);
-                                j++;
-                            }
-                            if (addrNew != 0)
-                            {
-                                // Superblock
-                                fs.Seek(-2, SeekOrigin.Current); // Затираем адрес в ListINode
-                                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+                            fs.Seek(14, SeekOrigin.Begin); // Уменьшаем FreeINodeCount
+                            fs.Read(two, 0, 2);
+                            UInt16 freeINodeCount = (UInt16)BitConverter.ToInt16(two, 0);
+                            freeINodeCount -= 1;
+                            fs.Seek(-2, SeekOrigin.Current);
+                            fs.Write(BitConverter.GetBytes(freeINodeCount), 0, 2);
 
-                                fs.Seek(14, SeekOrigin.Begin); // Уменьшаем FreeINodeCount
-                                fs.Read(two, 0, 2);
-                                UInt16 freeINodeCount = (UInt16)BitConverter.ToInt16(two, 0);
-                                freeINodeCount -= 1;
-                                fs.Seek(-2, SeekOrigin.Current);
-                                fs.Write(BitConverter.GetBytes(freeINodeCount), 0, 2);
+                            //INode
+                            fs.Seek(addrNew, SeekOrigin.Begin);
+                            fs.Write(thirty, 0, 30);
 
-                                //INode
-                                fs.Seek(addrNew, SeekOrigin.Begin);
-                                fs.Write(thirty, 0, 30);
-
-                                string name = Path.GetFileNameWithoutExtension(name2);
-                                string expansion = Path.GetExtension(name2).Split('.')[1];
-                                fs.Close();
-                                WriteNewFullName(addrNew, name, expansion);
-                                WriteDataInBlock(Directory, BitConverter.GetBytes(addrNew));
-                                string data = ReadFile(name1);
-                                WriteInFile(name2, data);
-                                return;
-                            }
+                            string name = Path.GetFileNameWithoutExtension(name2);
+                            string expansion = Path.GetExtension(name2).Split('.')[1];
+                            fs.Close();
+                            WriteNewFullName(addrNew, name, expansion);
+                            WriteDataInBlock(Directory, BitConverter.GetBytes(addrNew));
+                            string data = ReadFile(name1);
+                            WriteInFile(name2, data);
+                            return;
                         }
                     }
                 }
@@ -546,27 +593,40 @@ namespace OS_kurs
 
                     UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
 
+                    fs.Seek(addr, SeekOrigin.Begin); // Получаем права доступа
+                    fs.Read(eight, 0, 8);
+                    string rights = GetValidString(eight);
+
                     fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+
+                    fs.Seek(addr + 9, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 gid = (UInt16)one[0];
+
+                    if (!(rights[2] == 'r' && temp == UserID) && !(rights[5] == 'r' && gid == GroupID)) // Проверяет права доступа
+                        continue;
+
+                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    temp = (UInt16)one[0];
+                    
+                    fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                    fs.Read(two, 0, 2);
+                    temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                    fs.Read(twenty, 0, 20);
+                    res += GetValidString(twenty);
+                    fs.Read(four, 0, 4);
+                    res += "." + GetValidString(four);
+
+                    if (res == fullname)
                     {
-                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
-                        fs.Read(two, 0, 2);
-                        temp = (UInt16)BitConverter.ToInt16(two, 0);
-
-                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
-                        fs.Read(twenty, 0, 20);
-                        res += GetValidString(twenty);
-                        fs.Read(four, 0, 4);
-                        res += "." + GetValidString(four);
-
-                        if (res == fullname)
-                        {
-                            fs.Close();
-                            byte[] value = ReadFileBlock(addr);
-                            return GetValidString(value);
-                        }
+                        fs.Close();
+                        byte[] value = ReadFileBlock(addr);
+                        return GetValidString(value);
                     }
                 }
             }
@@ -596,38 +656,47 @@ namespace OS_kurs
 
                     UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
 
+                    fs.Seek(addr, SeekOrigin.Begin); // Получаем права доступа
+                    fs.Read(eight, 0, 8);
+                    string rights = GetValidString(eight);
+
                     fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+
+                    fs.Seek(addr + 9, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 gid = (UInt16)one[0];
+
+                    if (!(rights[3] == 'w' && temp == UserID) && !(rights[6] == 'w' && gid == GroupID)) // Проверяет права доступа
+                        continue;
+
+                    fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                    fs.Read(two, 0, 2);
+                    temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                    fs.Read(twenty, 0, 20);
+                    res += GetValidString(twenty);
+                    fs.Read(four, 0, 4);
+                    res += "." + GetValidString(four);
+
+                    if (res == fullname)
                     {
-                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                        fs.Seek(addr + 10, SeekOrigin.Begin); // Считываем SizeInBytes
                         fs.Read(two, 0, 2);
-                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+                        UInt16 sizeInBytes = (UInt16)BitConverter.ToInt16(two, 0);
 
-                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
-                        fs.Read(twenty, 0, 20);
-                        res += GetValidString(twenty);
-                        fs.Read(four, 0, 4);
-                        res += "." + GetValidString(four);
+                        fs.Read(two, 0, 2); // Считываем sizeInBlocks TODO
+                        UInt16 sizeInBlocks = (UInt16)BitConverter.ToInt16(two, 0);
 
-                        if (res == fullname)
+                        if (512 - sizeInBytes - 24 > value.Length)
                         {
-                            fs.Seek(addr + 10, SeekOrigin.Begin); // Считываем SizeInBytes
-                            fs.Read(two, 0, 2);
-                            UInt16 sizeInBytes = (UInt16)BitConverter.ToInt16(two, 0);
+                            fs.Seek(temp + 24 + sizeInBytes, SeekOrigin.Begin);
+                            fs.Write(Encoding.UTF8.GetBytes(value), 0, value.Length);
 
-                            fs.Read(two, 0, 2); // Считываем sizeInBlocks TODO
-                            UInt16 sizeInBlocks = (UInt16)BitConverter.ToInt16(two, 0);
-
-                            if (512 - sizeInBytes - 24 > value.Length)
-                            {
-                                fs.Seek(temp + 24 + sizeInBytes, SeekOrigin.Begin);
-                                fs.Write(Encoding.UTF8.GetBytes(value), 0, value.Length);
-
-                                fs.Seek(addr + 10, SeekOrigin.Begin); // Увеличиваем SizeInBytes
-                                fs.Write(BitConverter.GetBytes((UInt16)(sizeInBytes + value.Length)), 0, 2);
-                            }
+                            fs.Seek(addr + 10, SeekOrigin.Begin); // Увеличиваем SizeInBytes
+                            fs.Write(BitConverter.GetBytes((UInt16)(sizeInBytes + value.Length)), 0, 2);
                         }
                     }
                 }
@@ -657,55 +726,68 @@ namespace OS_kurs
 
                     UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
 
-                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Seek(Directory, SeekOrigin.Begin); // Получаем права доступа
+                    fs.Read(eight, 0, 8);
+                    string rights = GetValidString(eight);
+
+                    fs.Seek(Directory + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+
+                    fs.Seek(Directory + 9, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 gid = (UInt16)one[0];
+
+                    if (!(rights[3] == 'w' && temp == UserID) && !(rights[6] == 'w' && gid == GroupID)) // Проверяет права доступа
+                        continue;
+
+                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    temp = (UInt16)one[0];
+                    
+                fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                    fs.Read(two, 0, 2);
+                    temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                    fs.Read(twenty, 0, 20);
+                    res += GetValidString(twenty);
+
+                    if (res == name1)
                     {
-                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
-                        fs.Read(two, 0, 2);
-                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+                        fs.Seek(addr, SeekOrigin.Begin); // Получаем данные из копируемого INode
+                        fs.Read(thirty, 0, 30);
 
-                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
-                        fs.Read(twenty, 0, 20);
-                        res += GetValidString(twenty);
-
-                        if (res == name1)
+                        int j = 0;
+                        UInt16 addrNew = 0;
+                        while (j < 20 && addrNew == 0)
                         {
-                            fs.Seek(addr, SeekOrigin.Begin); // Получаем данные из копируемого INode
-                            fs.Read(thirty, 0, 30);
+                            fs.Seek(18 + j * 2, SeekOrigin.Begin);
+                            fs.Read(two, 0, 2);
+                            addrNew = (UInt16)BitConverter.ToInt16(two, 0);
+                            j++;
+                        }
+                        if (addrNew != 0)
+                        {
+                            // Superblock
+                            fs.Seek(-2, SeekOrigin.Current); // Затираем адрес в ListINode
+                            fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
 
-                            int j = 0;
-                            UInt16 addrNew = 0;
-                            while (j < 20 && addrNew == 0)
-                            {
-                                fs.Seek(18 + j * 2, SeekOrigin.Begin);
-                                fs.Read(two, 0, 2);
-                                addrNew = (UInt16)BitConverter.ToInt16(two, 0);
-                                j++;
-                            }
-                            if (addrNew != 0)
-                            {
-                                // Superblock
-                                fs.Seek(-2, SeekOrigin.Current); // Затираем адрес в ListINode
-                                fs.Write(BitConverter.GetBytes((UInt16)0), 0, 2);
+                            fs.Seek(14, SeekOrigin.Begin); // Уменьшаем FreeINodeCount
+                            fs.Read(two, 0, 2);
+                            UInt16 freeINodeCount = (UInt16)BitConverter.ToInt16(two, 0);
+                            freeINodeCount -= 1;
+                            fs.Seek(-2, SeekOrigin.Current);
+                            fs.Write(BitConverter.GetBytes(freeINodeCount), 0, 2);
 
-                                fs.Seek(14, SeekOrigin.Begin); // Уменьшаем FreeINodeCount
-                                fs.Read(two, 0, 2);
-                                UInt16 freeINodeCount = (UInt16)BitConverter.ToInt16(two, 0);
-                                freeINodeCount -= 1;
-                                fs.Seek(-2, SeekOrigin.Current);
-                                fs.Write(BitConverter.GetBytes(freeINodeCount), 0, 2);
+                            //INode
+                            fs.Seek(addrNew, SeekOrigin.Begin);
+                            fs.Write(thirty, 0, 30);
 
-                                //INode
-                                fs.Seek(addrNew, SeekOrigin.Begin);
-                                fs.Write(thirty, 0, 30);
-
-                                fs.Close();
-                                WriteNewFullName(addrNew, name2, "dir");
-                                WriteDataInBlock(Directory, BitConverter.GetBytes(addrNew));
-                                return;
-                            }
+                            fs.Close();
+                            WriteNewFullName(addrNew, name2, "dir");
+                            WriteDataInBlock(Directory, BitConverter.GetBytes(addrNew));
+                            return;
                         }
                     }
                 }
@@ -737,7 +819,7 @@ namespace OS_kurs
                     fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
                     fs.Read(one, 0, 1);
                     UInt16 temp = (UInt16)one[0];
-                    if (temp == UserID)
+                    if (temp == UserID || 0 == UserID)
                     {
                         fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
                         fs.Read(two, 0, 2);
@@ -750,6 +832,53 @@ namespace OS_kurs
                         res += "." + GetValidString(four);
 
                         if(res == fullname)
+                        {
+                            fs.Seek(addr + 2, SeekOrigin.Begin);
+                            fs.Write(Encoding.UTF8.GetBytes(rights), 0, INode.AccessSize - 2);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        }
+        public bool ChangeRightsDir(string rights, string fullname)
+        {
+            byte[] files = ReadFileBlock(Directory);
+            using (FileStream fs = new FileStream(path, FileMode.Open))
+            {
+                byte[] two = new byte[2];
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                byte[] twenty = new byte[20];
+                byte[] four = new byte[4];
+
+                fs.Seek(Directory + 10, SeekOrigin.Begin); // Считаем размер директории
+                fs.Read(two, 0, 2);
+                UInt16 count = (UInt16)BitConverter.ToInt16(two, 0);
+
+                for (int i = 0; i < count; i += 2)
+                {
+                    string res = "";
+                    two[0] = files[i];
+                    two[1] = files[i + 1];
+
+                    UInt16 addr = (UInt16)BitConverter.ToInt16(two, 0);
+
+                    fs.Seek(addr + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 temp = (UInt16)one[0];
+                    if (temp == UserID || 0 == UserID)
+                    {
+                        fs.Seek(addr + 30, SeekOrigin.Begin); // Получаем BlockAddress
+                        fs.Read(two, 0, 2);
+                        temp = (UInt16)BitConverter.ToInt16(two, 0);
+
+                        fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
+                        fs.Read(twenty, 0, 20);
+                        res += GetValidString(twenty);
+
+                        if (res == fullname)
                         {
                             fs.Seek(addr + 2, SeekOrigin.Begin);
                             fs.Write(Encoding.UTF8.GetBytes(rights), 0, INode.AccessSize - 2);
@@ -848,6 +977,29 @@ namespace OS_kurs
         }
         public void CreateFile(string name, string expansion)
         {
+            if (Directory != 60)
+            {
+                byte[] eight = new byte[8];
+                byte[] one = new byte[1];
+                using (FileStream fs = new FileStream(path, FileMode.Open))
+                {
+                    fs.Seek(Directory, SeekOrigin.Begin); // Получаем права доступа
+                    fs.Read(eight, 0, 8);
+                    string rights = GetValidString(eight);
+
+                    fs.Seek(Directory + 8, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 temp = (UInt16)one[0];
+
+                    fs.Seek(Directory + 9, SeekOrigin.Begin); // Получаем UserID
+                    fs.Read(one, 0, 1);
+                    UInt16 gid = (UInt16)one[0];
+
+                    if (!(rights[3] == 'w' && temp == UserID) && !(rights[6] == 'w' && gid == GroupID)) // Проверяет права доступа
+                        return;
+                }
+            }
+
             UInt16 addr = WriteNewINode("TFrw----");
             WriteNewFullName(addr, name, expansion);
             WriteDataInBlock(Directory, BitConverter.GetBytes(addr));
@@ -1041,6 +1193,8 @@ namespace OS_kurs
         }
         public void AddUser(string login, string password)
         {
+            if (UserID != 0)
+                return;
             using (FileStream fs = new FileStream(path, FileMode.Open))
             {
                 for (int i = 5062; i < 5480; i += 42)
@@ -1064,6 +1218,8 @@ namespace OS_kurs
         }
         public void ChangeGroup(string login, string group)
         {
+            if (UserID != 0)
+                return;
             if (Convert.ToInt32(group) > 255 || Convert.ToInt32(group) < 0)
                 return;
             using (FileStream fs = new FileStream(path, FileMode.Open))

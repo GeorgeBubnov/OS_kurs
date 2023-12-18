@@ -24,7 +24,7 @@ namespace OS_kurs.FS
 
         public INode()
         {
-            Access = "TDrwx---";
+            Access = "TDrwxrwx";
             UserID = 0;
             GroupID = 0;
             SizeInBytes = 0;

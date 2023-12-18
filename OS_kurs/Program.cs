@@ -73,7 +73,12 @@ namespace OS_kurs
                             Console.WriteLine("Права изменены успешно!");
                         break;
 
-                    // Только для файлов
+                    case string s when Regex.IsMatch(s, @"^chmod [r\-][w\-][x\-][r\-][w\-][x\-] [a-zA-Z0-9]+$"):
+                        string[] chcmodv = Regex.Replace(s, @"^chmod ", "").Split(' ');
+                        if (sys.ChangeRightsDir(chcmodv[0], chcmodv[1]))
+                            Console.WriteLine("Права изменены успешно!");
+                        break;
+
                     case string s when Regex.IsMatch(s, @"^cp [a-zA-Z0-9]+\.[a-z]+ [a-zA-Z0-9]+\.[a-z]+$"):
                         string[] cpv = Regex.Replace(s, @"^cp ", "").Split(' ');
                         sys.CopyFile(cpv[0], cpv[1]);
@@ -94,7 +99,6 @@ namespace OS_kurs
                         break;
 
                     case string s when Regex.IsMatch(s, @"^echo .+ >> [a-zA-Z0-9]+\.[a-z]+$"):
-                        //Если добавить в конец
                         string echoVal = Regex.Replace(s, @"^echo ", "");
                         string values = Regex.Replace(echoVal, @" >> [a-zA-Z0-9]+\.[a-z]+$", "");
                         string ename = Regex.Replace(echoVal, @".+ >> ", "");
@@ -141,7 +145,7 @@ namespace OS_kurs
                         Console.Write(
                             " touch\tСоздает новый файл с именем и расширением указанным в file\n" +
                             " ls\tОтображает содержимое текущей директории\n" +
-                            " chmod\tИзменяет права доступа файла file на rights\n" +
+                            " chmod\tИзменяет права доступа файла file на rights\n" + ///and for dir
                             " cp\tКопирует файл oldfile в newfile\n" +
                             " rm\tУдаляет файл file\n" +
                             " mkdir\tСоздает директорию dir\n" +
@@ -241,6 +245,7 @@ namespace OS_kurs
                 if (sys.IsLogin(login, password) == false)
                     Console.WriteLine("Ошибка! Неверное значение\n");
             } while (!sys.IsLogin(login, password));
+            sys.Directory = 60;
         }
         static async void WriteTopProcess()
         {
