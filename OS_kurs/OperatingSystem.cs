@@ -64,8 +64,8 @@ namespace OS_kurs
                 return ProcessQueue.Where(process => process.ID == id).First();
             return null;
         }
-        public void ChangeProcessWorkingTime(int id, int time) { GetProcessByID(id).Time = time; }
-        public void ChangeProcessPriorety(int id, sbyte pri) { GetProcessByID(id).Priority = pri; }
+        public void ChangeTime(int id, int time) { GetProcessByID(id).Time = time; }
+        public void ChangePriorety(int id, sbyte pri) { GetProcessByID(id).Priority = pri; }
         public string GetProcess() 
         {
             string res = "ID\tTime\tStatus\tPriorety\n";

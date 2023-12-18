@@ -19,7 +19,7 @@ namespace OS_kurs
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());*/
 
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("Hello World! It's GeorgeOS");
             sys = new FileSystem();
             os = new OperatingSystem();
 
@@ -95,10 +95,10 @@ namespace OS_kurs
 
                     case string s when Regex.IsMatch(s, @"^echo .+ >> [a-zA-Z0-9]+\.[a-z]+$"):
                         //Если добавить в конец
-                        string EchoVal = Regex.Replace(s, @"^echo ", "");
-                        string Values = Regex.Replace(EchoVal, @" >> [a-zA-Z0-9]+\.[a-z]+$", "");
-                        string NameFile = Regex.Replace(EchoVal, @".+ >> ", "");
-                        sys.WriteInFile(NameFile, Values);
+                        string echoVal = Regex.Replace(s, @"^echo ", "");
+                        string values = Regex.Replace(echoVal, @" >> [a-zA-Z0-9]+\.[a-z]+$", "");
+                        string ename = Regex.Replace(echoVal, @".+ >> ", "");
+                        sys.WriteInFile(ename, values);
                         break;
 
                     case string s when Regex.IsMatch(s, @"^cat [a-zA-Z0-9]+\.[a-z]+$"):
@@ -138,33 +138,33 @@ namespace OS_kurs
 
                     case "help":
 // TODO Пресматривать список INode
-                        Console.WriteLine(
-                            " touch\t<file>\tСоздает новый файл <file> или обновляет время его последнего доступа и модификации.\n" +
-                            " ls\tОтображает содержимое корневой директории.\n" +
-                            " chmod\t<permissions> <file>\tИзменяет права доступа к файлу в соответствии с указанными <permissions>.\n" +
-                            " cp\t<file>\tКопирует файлы  <file> \n" +
-                            " rm\t<file>\tУдаляет указанный файл.\n" +
-                            " mkdir \n" +
-                            " cd \n" +
-                            " rmdir \n" +
-                            " cpdir \n" + // TODO WITHOUT DATA
-                            " echo\t<text> > <file>\t Может быть использована для дописывания в конец файла с >>.\n" + // TODO BIGDATA
-                            " cat\t<file>\tВыводит текст из файла <file> в консоль.\n" + // TODO BIGDATA
-                            " move \n" + // MB TODO with slash / || TODO Directory
-                            " rename\t<file> <name>\tИзменяет название <name> файла <file>.\n" +
-                            " renamedir \n" +
-                            " users\tОтображает всех существующих пользователей в системе\n" +
-                            " adduser \n" +
-                            " login \n" +
-                            " chgroup \n" + // TODO FUNCTIONALITY чтобы читались права доступа в ls и т.д.
-                            " exit \n" +
-                            " ps\t\tОтобразить все существующие процессы. \n" +
-                            " kill \n" +
-                            " mp\t<time> <priority>\tСоздать новый процесс с временем работы <time> и приоритетом <priority>. Приоритет можно не указывать. \n" +
-                            " chpt\t<id> <time>\tИзменить время работы процесса с идентификатором <id> на время <time>. \n" +
-                            " chpp\t<id> <priorety>\tИзменить приоритет процесса с идентификатором <id> на приоритет <priorety>. \n" +
-                            " gen\t<count>\tСгенерировать количество <count> новый процессов. \n" +
-                            " top\t\tОтображение всех существующих процессов в реальном времени в порядке очереди. \n"
+                        Console.Write(
+                            " touch\tСоздает новый файл с именем и расширением указанным в file\n" +
+                            " ls\tОтображает содержимое текущей директории\n" +
+                            " chmod\tИзменяет права доступа файла file на rights\n" +
+                            " cp\tКопирует файл oldfile в newfile\n" +
+                            " rm\tУдаляет файл file\n" +
+                            " mkdir\tСоздает директорию dir\n" +
+                            " cd\tПереходит в директорию dir\n" +
+                            " rmdir\tУдаляет директорию dir\n" +
+                            " cpdir\tКопирует директорию olddir в newdir\n" + // TODO WITHOUT DATA
+                            " echo\tДописывает text в конец файла file\n" + // TODO BIGDATA
+                            " cat\tОтображает содержимое файла file\n" + // TODO BIGDATA
+                            " move\tПеремещает файл file в директорию dir\n" + // MB TODO with slash / || TODO Directory
+                            " rename\tИзменяет название файла oldfile на newfile\n" +
+                            " renamedir\tИзменяет название директории olddir на newdir\n" +
+                            " users\tОтображает информацию о пользователях\n" +
+                            " adduser\tДобавляет пользователя с логином login и паролем password\n" +
+                            " login\tЗапрашивает логин и пароль для входа в систему\n" +
+                            " chgroup\tИзменяет группу пользователя login на gid\n" + // TODO FUNCTIONALITY чтобы читались права доступа в ls и т.д.
+                            "\texit\tВыход из системы\n" +
+                            " ps\tОтображает информацию о процессах\n" +
+                            " kill\tУничтожает процесс с идентификатором pid\n" +
+                            " mp\tСоздает новый процесс с заданным временем работы time и приоритетом pri\n" +
+                            " chpt\tИзменяет время работы процесса с идентификатором pid на time\n" +
+                            " chpp\tИзменяет приоритет процесса с идентификатором pid на pri\n" +
+                            " gen\tГенерирует count случайных процессов\n" +
+                            " top\tОтображает информацию о процессах в реальном времени\n"
                             );
                         break;
 
@@ -196,7 +196,7 @@ namespace OS_kurs
                         {
                             int id = int.Parse(cht.Split(' ')[0]);
                             int time = int.Parse(cht.Split(' ')[1]);
-                            os.ChangeProcessWorkingTime(id, time);
+                            os.ChangeTime(id, time);
                         }
                         break;
 
@@ -205,7 +205,7 @@ namespace OS_kurs
                         {
                             var id = int.Parse(chp.Split(' ')[0]);
                             var pri = sbyte.Parse(chp.Split(' ')[1]);
-                            os.ChangeProcessPriorety(id, pri);
+                            os.ChangePriorety(id, pri);
                         }
                         break;
 

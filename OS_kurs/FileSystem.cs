@@ -474,10 +474,10 @@ namespace OS_kurs
                         fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
                         fs.Read(twenty, 0, 20);
                         res = GetValidString(twenty);
-                        fs.Read(two, 0, 2);
-                        UInt16 expansiton = (UInt16)BitConverter.ToInt16(two, 0); ;
+                        fs.Read(four, 0, 4);
+                        res += "." + GetValidString(four);
 
-                        if (res == name1 && expansiton == 0)
+                        if (res == name1)
                         {
                             fs.Seek(addr, SeekOrigin.Begin); // Получаем данные из копируемого INode
                             fs.Read(thirty, 0, 30);
@@ -513,6 +513,8 @@ namespace OS_kurs
                                 fs.Close();
                                 WriteNewFullName(addrNew, name, expansion);
                                 WriteDataInBlock(Directory, BitConverter.GetBytes(addrNew));
+                                string data = ReadFile(name1);
+                                WriteInFile(name2, data);
                                 return;
                             }
                         }
@@ -667,7 +669,6 @@ namespace OS_kurs
                         fs.Seek(temp, SeekOrigin.Begin); // Считываем название и расширение
                         fs.Read(twenty, 0, 20);
                         res += GetValidString(twenty);
-                        
 
                         if (res == name1)
                         {
