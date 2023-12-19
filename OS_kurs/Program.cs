@@ -151,7 +151,7 @@ namespace OS_kurs
                             " mkdir\tСоздает директорию dir\n" +
                             " cd\tПереходит в директорию dir\n" +
                             " rmdir\tУдаляет директорию dir\n" +
-                            " cpdir\tКопирует директорию olddir в newdir\n" + // TODO WITHOUT DATA
+                            " cpdir\tКопирует директорию olddir в newdir\n" + // TODO WITH DATA
                             " echo\tДописывает text в конец файла file\n" + // TODO BIGDATA
                             " cat\tОтображает содержимое файла file\n" + // TODO BIGDATA
                             " move\tПеремещает файл file в директорию dir\n" + // MB TODO with slash / || TODO Directory
@@ -160,7 +160,7 @@ namespace OS_kurs
                             " users\tОтображает информацию о пользователях\n" +
                             " adduser\tДобавляет пользователя с логином login и паролем password\n" +
                             " login\tЗапрашивает логин и пароль для входа в систему\n" +
-                            " chgroup\tИзменяет группу пользователя login на gid\n" + // TODO FUNCTIONALITY чтобы читались права доступа в ls и т.д.
+                            " chgroup\tИзменяет группу пользователя login на gid\n" +
                             "\texit\tВыход из системы\n" +
                             " ps\tОтображает информацию о процессах\n" +
                             " kill\tУничтожает процесс с идентификатором pid\n" +

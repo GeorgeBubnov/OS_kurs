@@ -1041,12 +1041,6 @@ namespace OS_kurs
                     fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.CreationTimeSize);
                     fs.Write(Encoding.UTF8.GetBytes(DateTime.Now.ToString("ddMMyyyy")), 0, INode.ModificationTimeSize);
 
-                    /*fs.Seek(60 + 10, SeekOrigin.Begin); // Считаем размер директории
-                    fs.Read(buffer, 0, 2);
-                    UInt16 count = (UInt16)BitConverter.ToInt16(buffer, 0);
-                    count += 2;
-                    fs.Seek(60 + 10, SeekOrigin.Begin); // Добавляем размер директории
-                    fs.Write(BitConverter.GetBytes(count), 0, INode.UserIDSize);*/
                     return address;
                 }
                 return 0;
@@ -1258,8 +1252,6 @@ namespace OS_kurs
 
                 Directory = 60;
             }
-
-
         }
         public void WriteSuperBlock()
         {
@@ -1310,22 +1302,6 @@ namespace OS_kurs
                 fs.Seek(15, SeekOrigin.Current);
                 fs.Write(BitConverter.GetBytes(0), 0, 1);
                 fs.Write(Encoding.UTF8.GetBytes(UserList[0].Password), 0, UserList[0].Password.Length);
-                
-                /*for(int i = 5060; i < 5480; i += 42)
-                {
-                    fs.Seek(i, SeekOrigin.Begin);
-                    fs.Write(BitConverter.GetBytes(UserList[0].ID), 0, UserNode.IDSize);
-                }*/
-
-                //Test Second User Login And Password
-                /*fs.Seek(17, SeekOrigin.Current);
-                fs.Write(BitConverter.GetBytes(UserList[0].ID), 0, UserNode.IDSize);
-                fs.Write(BitConverter.GetBytes(UserList[0].GroupID), 0, UserNode.GroupIDSize);
-                fs.Write(Encoding.UTF8.GetBytes("ro ot"), 0, 5);
-                fs.Seek(14, SeekOrigin.Current);
-                fs.Write(BitConverter.GetBytes(0), 0, 1);
-                fs.Write(Encoding.UTF8.GetBytes(UserList[0].Password), 0, UserList[0].Password.Length);*/
-
                 fs.Seek(5480, SeekOrigin.Begin);
                 fs.Write(BitConverter.GetBytes(0), 0, 1);
             }

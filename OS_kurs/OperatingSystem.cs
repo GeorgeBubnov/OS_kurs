@@ -28,7 +28,6 @@ namespace OS_kurs
                     {
                         SortQueque();
                         ProcessOS process = ProcessQueue.First();
-                        process.Status = 'R';
                         RunOperation(process);
                     }
                 }
@@ -37,18 +36,43 @@ namespace OS_kurs
         private void SortQueque()
         {
             ProcessQueue = ProcessQueue
-                .OrderBy(proc => proc.Priority)
-                .ThenBy(proc => proc.Time)
+                .OrderBy(p => p.Status)
+                .ThenBy(p => p.Priority)
+                .ThenBy(p => p.Time)
                 .ToList();
         }
         private void RunOperation(ProcessOS process)
         {
+            foreach(ProcessOS p in ProcessQueue)
+            {
+                if (p.Status == 'X')
+                {
+                    if (p.Count > 0)
+                        p.Count--;
+                    if(p.Count == 0)
+                    {
+                        p.Status = 'W';
+                        if (p.Priority > -19)
+                            p.Priority--;
+                    }
+                }
+            }
+
+            Thread.Sleep(Math.Min(QuantumOfTime, process.Time) * 10);
+
+            if (process.Status == 'X')
+                return;
+
+            process.Count += 2;
+            process.Status = 'R';
+
             if (QuantumOfTime > process.Time)
                 ProcessQueue.Remove(process);
             else
                 process.Time -= QuantumOfTime;
 
-            Thread.Sleep(Math.Min(QuantumOfTime, process.Time) * 10);
+            if (process.Count > 10)
+                process.Status = 'X';
 
             if (process.Time == 0)
                 process.Status = 'Z';
@@ -61,7 +85,7 @@ namespace OS_kurs
         private ProcessOS GetProcessByID(int id)
         {
             if (ProcessQueue.Count != 0)
-                return ProcessQueue.Where(process => process.ID == id).First();
+                return ProcessQueue.Where(p => p.ID == id).First();
             return null;
         }
         public void ChangeTime(int id, int time) { GetProcessByID(id).Time = time; }
@@ -69,7 +93,7 @@ namespace OS_kurs
         public string GetProcess() 
         {
             string res = "ID\tTime\tStatus\tPriorety\n";
-            List<ProcessOS> plist = ProcessQueue.OrderBy(proc => proc.ID).ToList();
+            List<ProcessOS> plist = ProcessQueue.OrderBy(p => p.Status).ToList();
             foreach (var process in plist)
             {
                 res += process.ID.ToString() + "\t";
